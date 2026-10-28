@@ -1,0 +1,71 @@
+#!/system/bin/sh
+# AVBPowerTool2 -- terminal diagnostics for the TWRP GUI terminal.
+# Prints geometry/capability info, then draws an ASCII ruler grid.
+# Relocatable: uses the directory this script lives in as the payload root.
+_self=$0
+if command -v readlink >/dev/null 2>&1; then
+    _r=$(readlink -f "$0" 2>/dev/null) && [ -n "$_r" ] && _self=$_r
+fi
+_here=$(cd "$(dirname "$_self")" 2>/dev/null && pwd)
+ROOT=${AVBPT_ROOT:-${_here:-/avbpowertool}}
+WS=${AVBPT_WORKSPACE:-/data/avbpowertool2_workspace}
+
+if [ -x "$ROOT/py/python" ]; then PYROOT="$ROOT/py"; else PYROOT=/python_env; fi
+export PYTHONHOME="$PYROOT"
+export LD_LIBRARY_PATH="$PYROOT:/system/lib64:$LD_LIBRARY_PATH"
+export PYTHONPATH="$ROOT/app:$ROOT/stdlib/python312.zip:$ROOT/pylib"
+export TERMINFO="$ROOT/terminfo"
+export PATH="$ROOT/bin:$PYROOT:$PATH"
+
+[ -n "$AVBPT_TERM" ] && export TERM="$AVBPT_TERM"
+[ -n "$TERM" ] || export TERM=twrp
+first=$(printf '%s' "$TERM" | cut -c1)
+[ -f "$TERMINFO/$first/$TERM" ] || { echo "termcheck: '$TERM' unknown, using twrp"; export TERM=twrp; }
+if [ -n "$AVBPT_LINES" ] && [ -n "$AVBPT_COLS" ]; then
+    export LINES="$AVBPT_LINES" COLUMNS="$AVBPT_COLS"
+elif [ -s "$WS/terminal.conf" ]; then
+    read -r gl gc < "$WS/terminal.conf"; [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+elif [ -s "$ROOT/terminal.conf" ]; then
+    read -r gl gc < "$ROOT/terminal.conf"; [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+fi
+
+echo "TERM=$TERM"
+stty size 2>/dev/null && echo "(stty size above)"
+echo "LANG=${LANG:-<unset>} LC_ALL=${LC_ALL:-<unset>}"
+
+"$PYROOT/python" - <<'PY'
+import os
+try:
+    print("os.get_terminal_size:", os.get_terminal_size(1))
+except Exception as e:
+    print("os.get_terminal_size failed:", e)
+try:
+    import curses
+    curses.setupterm()
+    print("tigetnum lines/cols:", curses.tigetnum("lines"), curses.tigetnum("cols"))
+    for cap in ("cup", "clear", "el", "kcuu1", "kcud1", "civis", "setaf"):
+        print(f"  {cap}: {curses.tigetstr(cap)!r}")
+except Exception as e:
+    print("setupterm failed:", repr(e))
+PY
+
+echo
+echo "Drawing ASCII grid for 8s ... (row 00 at top-left? lines wrapping?)"
+"$PYROOT/python" - <<'PY'
+import curses, time
+def main(s):
+    try:
+        curses.curs_set(0)
+    except Exception:
+        pass
+    s.erase()
+    h, w = s.getmaxyx()
+    ruler = "0123456789" * 20
+    for r in range(h - 1):
+        s.addstr(r, 0, ("%02d|" % r) + ruler[: max(0, w - 4)])
+    s.addstr(h - 1, 0, ("-- %dx%d --" % (h, w)).ljust(w - 1), curses.A_REVERSE)
+    s.refresh()
+    time.sleep(8)
+curses.wrapper(main)
+print("done")
+PY

@@ -1,0 +1,58 @@
+#!/system/bin/sh
+# Shows the numeric key code that curses receives. Press arrows / Enter / Esc,
+# read the number, press q to quit.
+_self=$0
+if command -v readlink >/dev/null 2>&1; then
+    _r=$(readlink -f "$0" 2>/dev/null) && [ -n "$_r" ] && _self=$_r
+fi
+_here=$(cd "$(dirname "$_self")" 2>/dev/null && pwd)
+ROOT=${AVBPT_ROOT:-${_here:-/avbpowertool}}
+WS=${AVBPT_WORKSPACE:-/data/avbpowertool2_workspace}
+
+if [ -x "$ROOT/py/python" ]; then PYROOT="$ROOT/py"; else PYROOT=/python_env; fi
+export PYTHONHOME="$PYROOT"
+export LD_LIBRARY_PATH="$PYROOT:/system/lib64:$LD_LIBRARY_PATH"
+export PYTHONPATH="$ROOT/app:$ROOT/stdlib/python312.zip:$ROOT/pylib"
+export TERMINFO="$ROOT/terminfo"
+export PATH="$ROOT/bin:$PYROOT:$PATH"
+
+[ -n "$AVBPT_TERM" ] && export TERM="$AVBPT_TERM"
+[ -n "$TERM" ] || export TERM=twrp
+first=$(printf '%s' "$TERM" | cut -c1)
+[ -f "$TERMINFO/$first/$TERM" ] || export TERM=twrp
+if [ -n "$AVBPT_LINES" ] && [ -n "$AVBPT_COLS" ]; then
+    export LINES="$AVBPT_LINES" COLUMNS="$AVBPT_COLS"
+elif [ -s "$WS/terminal.conf" ]; then
+    read -r gl gc < "$WS/terminal.conf"; [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+elif [ -s "$ROOT/terminal.conf" ]; then
+    read -r gl gc < "$ROOT/terminal.conf"; [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+fi
+
+"$PYROOT/python" - <<'PY'
+import curses, os
+NAMES = {curses.KEY_UP: "KEY_UP", curses.KEY_DOWN: "KEY_DOWN",
+         curses.KEY_LEFT: "KEY_LEFT", curses.KEY_RIGHT: "KEY_RIGHT",
+         27: "ESC", 10: "ENTER", 13: "ENTER", curses.KEY_ENTER: "KEY_ENTER",
+         127: "BACKSPACE", 8: "BACKSPACE"}
+
+def main(s):
+    try:
+        curses.curs_set(0)
+    except Exception:
+        pass
+    s.keypad(True)
+    last = "<none>"
+    while True:
+        s.erase()
+        s.addstr(0, 0, "keytest  (TERM=%s)  press keys, q = quit" % os.environ.get("TERM"))
+        s.addstr(2, 0, "last key: %s" % last)
+        s.addstr(4, 0, "up=259 down=258 right=261 left=260 enter=10/13 esc=27")
+        s.refresh()
+        k = s.getch()
+        if k == ord("q"):
+            break
+        last = "%d (%s)" % (k, NAMES.get(k, ""))
+
+curses.wrapper(main)
+print("bye")
+PY

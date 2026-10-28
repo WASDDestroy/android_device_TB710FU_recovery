@@ -1,0 +1,8 @@
+#!/system/bin/sh
+# Dispatcher so the tool is reachable as "avbpt" from a TWRP shell,
+# independently of where the payload was placed in the device tree.
+for p in /avbpowertool/avbpt /customzip/avbpowertool/avbpt /customzip/avbpt; do
+    [ -f "$p" ] && exec sh "$p" "$@"
+done
+echo "avbpt: payload not found (looked in /avbpowertool and /customzip)" >&2
+exit 1

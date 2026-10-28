@@ -1,0 +1,88 @@
+#!/system/bin/sh
+# AVBPowerTool2 for TWRP -- launcher
+#
+#   avbpt                 # TUI
+#   avbpt about           # CLI
+#   avbpt image inspect --image Images/boot.img
+#
+# Env overrides:
+#   AVBPT_ROOT=/avbpowertool            (auto-detected from the script location)
+#   AVBPT_WORKSPACE=/data/avbpowertool2_workspace
+#   AVBPT_TERM=twrp|xterm
+#   AVBPT_LINES=17 AVBPT_COLS=115
+#
+# The payload is relocatable: it runs from wherever avbpt itself sits, so
+# /avbpowertool, /customzip/avbpowertool or a flattened /customzip all work.
+
+_self=$0
+if command -v readlink >/dev/null 2>&1; then
+    _r=$(readlink -f "$0" 2>/dev/null) && [ -n "$_r" ] && _self=$_r
+fi
+_here=$(cd "$(dirname "$_self")" 2>/dev/null && pwd)
+ROOT=${AVBPT_ROOT:-${_here:-/avbpowertool}}
+WS=${AVBPT_WORKSPACE:-/data/avbpowertool2_workspace}
+
+# --- interpreter: prefer the bundled one, fall back to TWRP's /python_env ---
+if [ -x "$ROOT/py/python" ]; then
+    PYROOT="$ROOT/py"
+elif [ -x /python_env/python ]; then
+    PYROOT=/python_env
+else
+    echo "avbpt: no python runtime found ($ROOT/py or /python_env)" >&2
+    exit 1
+fi
+
+export PYTHONHOME="$PYROOT"
+export LD_LIBRARY_PATH="$PYROOT:/system/lib64:$LD_LIBRARY_PATH"
+export PYTHONPATH="$ROOT/app:$ROOT/stdlib/python312.zip:$ROOT/pylib"
+export PATH="$ROOT/bin:$PYROOT:$PATH"
+export AVB_CRYPTO_BACKEND=openssl
+
+# --- terminfo -------------------------------------------------------------
+# 'twrp' is a minimal ANSI entry (CUP/EL/ED/SGR + CSI arrow keys).  TWRP's
+# terminal does not implement VPA/CHA/scroll-regions/enacs, which the stock
+# "linux" entry emits and which corrupt the screen.
+export TERMINFO="$ROOT/terminfo"
+export TERMINFO_DIRS="$ROOT/terminfo:/system/etc/terminfo"
+[ -n "$AVBPT_TERM" ] && export TERM="$AVBPT_TERM"
+if [ -n "$TERM" ]; then
+    first=$(printf '%s' "$TERM" | cut -c1)
+    [ -f "$TERMINFO/$first/$TERM" ] || export TERM=twrp
+else
+    export TERM=twrp
+fi
+
+# --- geometry -------------------------------------------------------------
+if [ -n "$AVBPT_LINES" ] && [ -n "$AVBPT_COLS" ]; then
+    export LINES="$AVBPT_LINES" COLUMNS="$AVBPT_COLS"
+elif [ -s "$WS/terminal.conf" ]; then
+    read -r gl gc < "$WS/terminal.conf"
+    [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+elif [ -s "$ROOT/terminal.conf" ]; then
+    read -r gl gc < "$ROOT/terminal.conf"
+    [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+else
+    geom=$("$PYROOT/python" "$ROOT/tools/ttyprobe.py" 2>/dev/null)
+    case "$geom" in
+        [0-9]*" "[0-9]*) export LINES=${geom% *} COLUMNS=${geom#* } ;;
+    esac
+fi
+
+# --- workspace bootstrap ---------------------------------------------------
+if ! mkdir -p "$WS/Images" "$WS/profiles" "$WS/plugins" "$WS/Logs" \
+              "$WS/.avbpowertool-staging" "$WS/.tmp" 2>/dev/null || [ ! -w "$WS" ]; then
+    echo "avbpt: workspace $WS is not writable (is /data mounted/decrypted?)" >&2
+    exit 1
+fi
+# avbtool.py must sit in the workspace root (WorkspacePaths.avbtool_script).
+# Refresh it when missing or dangling (e.g. after the payload was relocated).
+if [ ! -e "$WS/avbtool.py" ]; then
+    rm -f "$WS/avbtool.py" 2>/dev/null
+    ln -s "$ROOT/app/avbtool.py" "$WS/avbtool.py" 2>/dev/null || \
+        cp "$ROOT/app/avbtool.py" "$WS/avbtool.py"
+fi
+export TMPDIR="$WS/.tmp"
+[ -w "$TMPDIR" ] || export TMPDIR=/tmp
+
+cd "$WS" || exit 1
+exec "$PYROOT/python" -m avbpowertool "$@"

@@ -1,0 +1,795 @@
+# AVBPowerTool 中文翻译
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: zh\n"
+
+# Navigation
+msgid "node.home.name"
+msgstr "AVBPowerTool 主页"
+
+msgid "node.home.description"
+msgstr "欢迎使用 AVBPowerTool。"
+
+msgid "node.read_image_info.name"
+msgstr "读取镜像信息"
+
+msgid "node.read_image_info.description"
+msgstr "读取工作目录中镜像的 AVB 配置。"
+
+# 读取镜像信息
+msgid "read_image_info.title"
+msgstr "读取镜像信息"
+
+msgid "read_image_info.no_images_dir"
+msgstr "未找到 Images/ 目录。"
+
+msgid "read_image_info.no_images"
+msgstr "Images/ 目录中未找到 .img 文件。"
+
+msgid "read_image_info.select_title"
+msgstr "选择要读取的镜像"
+
+msgid "read_image_info.results_title"
+msgstr "镜像信息结果"
+
+msgid "read_image_info.field.path"
+msgstr "  路径：{value}"
+
+msgid "read_image_info.field.descriptor"
+msgstr "  描述符：{value}"
+
+msgid "read_image_info.field.algorithm"
+msgstr "  算法：{value}"
+
+msgid "read_image_info.field.partition_name"
+msgstr "  分区名：{value}"
+
+msgid "read_image_info.field.public_key_sha1"
+msgstr "  公钥 SHA1：{value}"
+
+msgid "read_image_info.field.rollback_index"
+msgstr "  回滚索引：{value}"
+
+msgid "read_image_info.field.rollback_index_location"
+msgstr "  回滚索引位置：{value}"
+
+msgid "read_image_info.field.hash_algorithm"
+msgstr "  哈希算法：{value}"
+
+msgid "read_image_info.field.salt"
+msgstr "  盐值：{value}"
+
+msgid "read_image_info.field.digest"
+msgstr "  摘要：{value}"
+
+msgid "read_image_info.field.flags"
+msgstr "  标志位：{value}"
+
+msgid "read_image_info.field.prop"
+msgstr "  属性：{key} = {value}"
+
+msgid "read_image_info.field.included_partitions"
+msgstr "  包含的分区：{value}"
+
+msgid "read_image_info.field.chain"
+msgstr "  链：{name} slot={slot} pubkey={pubkey}"
+
+msgid "node.config_manager.name"
+msgstr "配置管理器"
+
+msgid "node.config_manager.description"
+msgstr "管理、导入和导出配置。"
+
+msgid "node.sign_images.name"
+msgstr "签名镜像"
+
+msgid "node.sign_images.description"
+msgstr "签名工作目录中的镜像。"
+
+msgid "node.create_config.name"
+msgstr "创建配置"
+
+msgid "node.create_config.description"
+msgstr "使用向导创建新的签名配置。"
+
+msgid "node.import_config.name"
+msgstr "导入配置"
+
+msgid "node.import_config.description"
+msgstr "导入归档配置。"
+
+msgid "node.export_config.name"
+msgstr "导出配置"
+
+msgid "node.export_config.description"
+msgstr "导出配置。"
+
+msgid "node.config_library.name"
+msgstr "配置库管理器"
+
+msgid "node.config_library.description"
+msgstr "管理已添加到 AVBPowerTool 的配置。"
+
+msgid "node.manage_keys.name"
+msgstr "管理密钥"
+
+msgid "node.manage_keys.description"
+msgstr "列出、发现和管理签名密钥。"
+
+msgid "node.settings.name"
+msgstr "设置"
+
+msgid "node.settings.description"
+msgstr "管理全局设置。"
+
+# Home
+msgid "home.action.view_current_config_info"
+msgstr "查看当前配置信息"
+
+# Settings actions
+msgid "settings.action.edit"
+msgstr "编辑设置"
+
+msgid "settings.action.view"
+msgstr "查看当前设置"
+
+msgid "settings.action.check_l10n"
+msgstr "检查缺失的翻译"
+
+# 其他功能节点
+msgid "node.misc.name"
+msgstr "其他功能"
+
+msgid "node.misc.description"
+msgstr "杂项工具与实用功能。"
+
+msgid "node.import_legacy.name"
+msgstr "导入 v1 旧版配置"
+
+msgid "node.import_legacy.description"
+msgstr "导入 v1 旧版配置归档并转换为 v2 格式。"
+
+# 旧版配置导入
+msgid "legacy.import.title"
+msgstr "导入结果"
+
+msgid "legacy.import.select_archive"
+msgstr "选择要导入的旧版归档"
+
+msgid "legacy.import.no_archives"
+msgstr "项目根目录中未找到 .zip 文件。"
+
+msgid "legacy.import.success"
+msgstr "已导入旧版配置 \"{profile}\"（{partitions} 个分区，{keys} 个密钥）。"
+
+# Settings UI
+msgid "settings.language"
+msgstr "语言"
+
+msgid "settings.log_level"
+msgstr "日志级别"
+
+msgid "settings.select_setting"
+msgstr "选择要编辑的设置"
+
+msgid "settings.current_suffix"
+msgstr "当前"
+
+msgid "settings.saved_title"
+msgstr "设置已保存"
+
+msgid "settings.saved"
+msgstr "已保存 {key}：{old} -> {new}"
+
+msgid "settings.restart_notice"
+msgstr "重启程序以使更改生效。"
+
+msgid "settings.view_title"
+msgstr "当前设置"
+
+msgid "settings.current_settings"
+msgstr "当前全局设置："
+
+msgid "settings.file_location"
+msgstr "设置文件"
+
+msgid "settings.check_l10n_title"
+msgstr "翻译检查"
+
+msgid "settings.check_l10n_header"
+msgstr "正在检查语言 {language} 的翻译"
+
+msgid "settings.check_l10n.no_missing"
+msgstr "语言 \"{language}\" 没有缺失的翻译。"
+
+msgid "settings.check_l10n.missing_header"
+msgstr "语言 \"{language}\" 缺失以下翻译（{count} 项）："
+
+msgid "settings.option.language.en"
+msgstr "English"
+
+msgid "settings.option.language.zh"
+msgstr "简体中文"
+
+msgid "settings.option.log_level.DEBUG"
+msgstr "调试"
+
+msgid "settings.option.log_level.INFO"
+msgstr "信息"
+
+msgid "settings.option.log_level.WARNING"
+msgstr "警告"
+
+msgid "settings.option.log_level.ERROR"
+msgstr "错误"
+
+# 配置向导
+msgid "config.wizard.enter_id"
+msgstr "输入配置 ID（如 my_device）："
+
+msgid "config.wizard.enter_name"
+msgstr "输入配置显示名称："
+
+msgid "config.wizard.choose_mode"
+msgstr "选择创建方式："
+
+msgid "config.wizard.mode_manual"
+msgstr "手动 — 逐个添加分区"
+
+msgid "config.wizard.mode_auto"
+msgstr "自动 — 扫描镜像并生成配置"
+
+msgid "config.wizard.step_partitions"
+msgstr "添加分区"
+
+msgid "config.wizard.step_confirm"
+msgstr "确认配置"
+
+msgid "config.wizard.current_partitions"
+msgstr "当前分区："
+
+msgid "config.wizard.no_partitions"
+msgstr "尚未添加分区"
+
+msgid "config.wizard.add_partition_hint"
+msgstr "至少需要一个分区才能创建配置。"
+
+msgid "config.wizard.add_partition_confirm"
+msgstr "添加分区？"
+
+msgid "config.wizard.confirm_create"
+msgstr "创建此配置？"
+
+msgid "config.wizard.no_partitions_title"
+msgstr "无分区"
+
+msgid "config.wizard.no_partitions_msg"
+msgstr "没有分区无法创建配置。操作已取消。"
+
+msgid "config.wizard.summary_id"
+msgstr "配置 ID"
+
+msgid "config.wizard.summary_name"
+msgstr "名称"
+
+msgid "config.wizard.summary_partitions"
+msgstr "分区数"
+
+msgid "config.wizard.created"
+msgstr "配置 \"{profile}\" 创建成功。"
+
+msgid "config.wizard.result_title"
+msgstr "创建结果"
+
+msgid "config.wizard.partition_name"
+msgstr "分区名称（如 boot）："
+
+msgid "config.wizard.partition_image"
+msgstr "镜像文件名（留空则为 <name>.img）："
+
+msgid "config.wizard.descriptor_type"
+msgstr "描述符类型："
+
+msgid "config.wizard.algorithm"
+msgstr "签名算法："
+
+msgid "config.wizard.key_id"
+msgstr "密钥 ID（如 release_rsa4096）："
+
+msgid "config.wizard.key_prepare_title"
+msgstr "准备密钥"
+
+msgid "config.wizard.key_prepare_msg"
+msgstr "密钥库目录：{path}\n请将 .pem 私钥文件放入该目录（文件名去掉 .pem 即为 key_id）。"
+
+msgid "config.wizard.key_prepare_continue"
+msgstr "按回车运行密钥发现并继续。"
+
+msgid "config.wizard.key_discovered"
+msgstr "发现 {count} 个密钥："
+
+msgid "config.wizard.key_none"
+msgstr "尚未发现密钥。可继续创建，之后在密钥管理中注册；在此之前引用这些密钥的分区在签名时会失败。"
+
+msgid "config.wizard.select_default_key"
+msgstr "为所有生成的分区选择默认密钥："
+
+msgid "config.wizard.select_key"
+msgstr "为该分区选择密钥："
+
+msgid "config.wizard.key_custom"
+msgstr "手动输入..."
+
+msgid "config.wizard.rollback_index"
+msgstr "回滚索引（默认 0）："
+
+msgid "config.wizard.rollback_index_location"
+msgstr "回滚索引位置（默认 0）："
+
+msgid "config.wizard.salt"
+msgstr "Salt（留空自动生成）："
+
+msgid "config.wizard.flags"
+msgstr "VBMeta 标志（默认 0）："
+
+msgid "config.wizard.set_ht_disabled"
+msgstr "设置 HASHTREE_DISABLED 标志？"
+
+msgid "config.wizard.set_vb_disabled"
+msgstr "设置 VERIFICATION_DISABLED 标志？"
+
+msgid "config.wizard.dynamic_partition_size"
+msgstr "使用动态分区大小（--dynamic_partition_size）？"
+
+msgid "config.wizard.partition_size"
+msgstr "分区大小（字节，--partition_size，必填）："
+
+msgid "config.wizard.block_size"
+msgstr "块大小（--block_size，默认 4096）："
+
+msgid "config.wizard.fec_num_roots"
+msgstr "FEC 冗余根数（--fec_num_roots，默认 2）："
+
+msgid "config.wizard.do_not_generate_fec"
+msgstr "不生成 FEC（--do_not_generate_fec）？"
+
+msgid "config.wizard.padding_size"
+msgstr "VBMeta 填充大小（字节，--padding_size，默认 0）："
+
+msgid "config.wizard.chain_do_not_use_ab"
+msgstr "添加非 A/B 链分区（--chain_partition_do_not_use_ab）？"
+
+msgid "config.wizard.chain_do_not_use_ab_list"
+msgstr "链分区（逗号分隔 PART:SLOT:KEY_PATH）："
+
+msgid "config.wizard.props"
+msgstr "属性（逗号分隔 key:value，可选）："
+
+msgid "config.wizard.kernel_cmdlines"
+msgstr "内核命令行参数（逗号分隔，可选）："
+
+msgid "config.wizard.auto_dir"
+msgstr "输入镜像目录路径（回车 = {default}）："
+
+msgid "config.wizard.auto_dir_not_found"
+msgstr "目录不存在。"
+
+msgid "config.wizard.auto_no_images"
+msgstr "目录中没有找到 .img 文件。"
+
+msgid "config.wizard.auto_scanning"
+msgstr "正在扫描镜像..."
+
+msgid "config.wizard.auto_found"
+msgstr "找到 {count} 个镜像："
+
+msgid "config.wizard.auto_meta_note"
+msgstr "从镜像读回的元数据（回滚指数、回滚指数位置、盐、flags、属性、哈希算法）："
+
+msgid "config.wizard.auto_size_note"
+msgstr "hash 分区大小已按镜像文件大小向上取整到 4096（如需调整请用 'config edit --set partition_size=...'）："
+
+msgid "config.wizard.auto_result"
+msgstr "生成了 {count} 个分区配置："
+
+msgid "config.wizard.auto_result_title"
+msgstr "自动生成的配置"
+
+msgid "config.wizard.auto_chain_note"
+msgstr "链式分区未写入配置（请先解析匹配密钥）："
+
+msgid "sign.vbmeta.props_prompt"
+msgstr "是否将此配置中的属性附加到即将生成的 vbmeta 镜像？"
+
+# 密钥管理
+msgid "keys.management_title"
+msgstr "密钥管理"
+
+msgid "keys.action.list"
+msgstr "列出密钥"
+
+msgid "keys.action.discover"
+msgstr "自动发现密钥"
+
+msgid "keys.action.add"
+msgstr "手动添加密钥"
+
+msgid "keys.action.remove"
+msgstr "移除密钥"
+
+msgid "keys.list_title"
+msgstr "密钥列表"
+
+msgid "keys.list_registered"
+msgstr "已注册的密钥（在 manifest 中）："
+
+msgid "keys.list_unregistered"
+msgstr "磁盘上未注册的 .pem 文件："
+
+msgid "keys.list_unregistered_hint"
+msgstr "使用「自动发现」注册，或使用「手动添加」逐个注册。"
+
+msgid "keys.list_empty"
+msgstr "未找到密钥。请先将 .pem 文件放入 keys/ 目录。"
+
+msgid "keys.discover_title"
+msgstr "密钥发现"
+
+msgid "keys.discover_confirm"
+msgstr "扫描 keys/ 目录中的 .pem 文件并重建 manifest？"
+
+msgid "keys.discover_result"
+msgstr "发现了 {count} 个密钥："
+
+msgid "keys.add_title"
+msgstr "添加密钥"
+
+msgid "keys.add_key_id"
+msgstr "输入密钥 ID（如 release_rsa4096）："
+
+msgid "keys.add_filename"
+msgstr "输入 .pem 文件名（如 release_rsa4096.pem）："
+
+msgid "keys.add_success"
+msgstr "密钥 \"{key_id}\" 已添加到 manifest。"
+
+msgid "keys.remove_title"
+msgstr "移除密钥"
+
+msgid "keys.select_remove"
+msgstr "选择要移除的密钥："
+
+msgid "keys.remove_confirm"
+msgstr "从 manifest 中移除密钥 \"{key_id}\"？"
+
+msgid "keys.remove_success"
+msgstr "密钥 \"{key_id}\" 已从 manifest 中移除。"
+
+# UI 字符串
+msgid "Exit"
+msgstr "退出"
+
+msgid "Back"
+msgstr "返回"
+
+msgid "input.help"
+msgstr "左右方向键/Home/End: 移动光标  退格/Delete: 删除  Ctrl+U: 清空  Enter: 确认  Esc: 取消"
+
+# 共享组件
+msgid "widget.choice.yes"
+msgstr "是"
+
+msgid "widget.choice.no"
+msgstr "否"
+
+msgid "widget.selected_count"
+msgstr "已选择：{selected}/{total}"
+
+msgid "widget.help.single_select"
+msgstr "上下方向键: 移动  Enter: 选择  [X]: 快捷键  Esc: 返回"
+
+msgid "widget.help.multi_select"
+msgstr "上下方向键: 移动  空格: 选择  Enter: 确认  Esc: 取消"
+
+msgid "widget.help.message_screen"
+msgstr "上下方向键: 滚动  PgUp/PgDn: 翻页  Enter/Esc: 退出"
+
+# 应用外壳
+msgid "app.error_title"
+msgstr "错误"
+
+msgid "app.success_title"
+msgstr "成功"
+
+msgid "app.not_implemented_title"
+msgstr "未实现"
+
+msgid "app.not_implemented_msg"
+msgstr "功能 {action} 尚未实现。"
+
+# 通用值
+msgid "common.not_available"
+msgstr "无"
+
+# 配置库
+msgid "library.title"
+msgstr "配置库"
+
+msgid "library.no_profiles"
+msgstr "未找到配置。"
+
+msgid "library.active_suffix"
+msgstr "已激活"
+
+msgid "library.options_title"
+msgstr "{profile} 的操作"
+
+msgid "library.action.activate"
+msgstr "激活"
+
+msgid "library.action.delete"
+msgstr "删除"
+
+msgid "library.activated"
+msgstr "已激活：{profile}"
+
+msgid "library.delete_confirm"
+msgstr "删除配置 '{profile}'？此操作不可撤销。"
+
+msgid "library.deleted"
+msgstr "已删除：{profile}"
+
+# 导入配置
+msgid "import.title"
+msgstr "导入配置"
+
+msgid "import.no_archives"
+msgstr "项目根目录中未找到 .zip 文件。"
+
+msgid "import.select_archive"
+msgstr "选择要导入的压缩包"
+
+msgid "import.success"
+msgstr "已导入配置：{profile}"
+
+msgid "import.result_title"
+msgstr "导入结果"
+
+# 导出配置
+msgid "export.title"
+msgstr "导出配置"
+
+msgid "export.select_profile"
+msgstr "选择要导出的配置"
+
+msgid "export.success"
+msgstr "已导出到：{path}"
+
+msgid "export.result_title"
+msgstr "导出结果"
+
+# 签名镜像
+msgid "sign.title"
+msgstr "签名镜像"
+
+msgid "sign.no_images_dir"
+msgstr "未找到 Images/ 目录。"
+
+msgid "sign.no_images"
+msgstr "Images/ 目录中未找到 .img 文件。"
+
+msgid "sign.confirm"
+msgstr "签名镜像？此操作会修改镜像文件。"
+
+msgid "sign.select_title"
+msgstr "选择要签名的镜像"
+
+msgid "sign.summary"
+msgstr "成功：{success}，失败：{failed}"
+
+msgid "sign.dry_run_done"
+msgstr "试运行完成。"
+
+msgid "sign.steps_planned"
+msgstr "计划步骤数：{count}"
+
+msgid "sign.results_title"
+msgstr "签名结果"
+
+# 当前配置展示
+msgid "config.show_title"
+msgstr "当前配置信息"
+
+msgid "config.no_partitions"
+msgstr "未配置任何分区。"
+
+msgid "config.field.profile"
+msgstr "配置：{value}"
+
+msgid "config.field.image"
+msgstr "  镜像：{value}"
+
+msgid "config.field.descriptor"
+msgstr "  描述符：{value}"
+
+msgid "config.field.algorithm"
+msgstr "  算法：{value}"
+
+msgid "config.field.key_id"
+msgstr "  密钥 ID：{value}"
+
+msgid "config.field.partition_size"
+msgstr "  分区大小：{value}"
+
+msgid "config.field.dynamic_partition_size"
+msgstr "  动态分区大小：true"
+
+msgid "config.field.rollback_index"
+msgstr "  回滚索引：{value}"
+
+msgid "config.field.rollback_index_location"
+msgstr "  回滚索引位置：{value}"
+
+msgid "config.field.salt"
+msgstr "  盐值：{value}"
+
+msgid "config.field.hash_algorithm"
+msgstr "  哈希算法：{value}"
+
+msgid "config.field.flags"
+msgstr "  标志位：{value}"
+
+msgid "config.field.props_header"
+msgstr "  属性："
+
+msgid "config.field.prop_from_file_header"
+msgstr "  文件属性："
+
+msgid "config.field.set_hashtree_disabled"
+msgstr "  设置 Hashtree 禁用：true"
+
+msgid "config.field.set_verification_disabled"
+msgstr "  设置校验禁用：true"
+
+msgid "config.field.block_size"
+msgstr "  块大小：{value}"
+
+msgid "config.field.do_not_generate_fec"
+msgstr "  不生成 FEC：true"
+
+msgid "config.field.fec_num_roots"
+msgstr "  FEC 根数：{value}"
+
+msgid "config.field.no_hashtree"
+msgstr "  无 Hashtree：true"
+
+msgid "config.field.check_at_most_once"
+msgstr "  至多校验一次：true"
+
+msgid "config.field.setup_as_rootfs_from_kernel"
+msgstr "  从内核设置 rootfs：true"
+
+msgid "config.field.included_partitions"
+msgstr "  包含的分区：{value}"
+
+msgid "config.field.include_descriptors_from_image"
+msgstr "  从镜像包含描述符：{value}"
+
+msgid "config.field.chain_partitions"
+msgstr "  链分区：{value}"
+
+msgid "config.field.chain_partitions_no_ab"
+msgstr "  链分区（非 A/B）：{value}"
+
+msgid "config.field.kernel_cmdlines"
+msgstr "  内核命令行：{value}"
+
+msgid "config.field.setup_rootfs_from_kernel"
+msgstr "  从内核设置 rootfs：{value}"
+
+msgid "config.field.padding_size"
+msgstr "  填充大小：{value}"
+
+msgid "config.field.output_vbmeta_image"
+msgstr "  输出 vbmeta 镜像：{value}"
+
+msgid "config.field.calc_max_image_size"
+msgstr "  计算最大镜像大小：true"
+
+msgid "config.field.do_not_append_vbmeta_image"
+msgstr "  不附加 vbmeta 镜像：true"
+
+msgid "config.field.print_required_libavb_version"
+msgstr "  打印所需 libavb 版本：true"
+
+msgid "config.field.use_persistent_digest"
+msgstr "  使用持久摘要：true"
+
+msgid "config.field.do_not_use_ab"
+msgstr "  不使用 A/B：true"
+
+msgid "config.field.signing_helper"
+msgstr "  签名辅助程序：{value}"
+
+msgid "config.field.signing_helper_with_files"
+msgstr "  基于文件的签名辅助程序：{value}"
+
+msgid "config.field.public_key_metadata"
+msgstr "  公钥元数据：{value}"
+
+msgid "config.field.append_to_release_string"
+msgstr "  附加到版本字符串：{value}"
+
+# 插件
+msgid "node.plugins.name"
+msgstr "插件"
+
+msgid "node.plugins.description"
+msgstr "列出并运行已安装的插件。"
+
+msgid "plugin.title"
+msgstr "插件"
+
+msgid "plugin.none"
+msgstr "没有已安装的插件。"
+
+msgid "plugin.none_hint"
+msgstr "请在 CLI 中安装：avbpowertool plugin install <目录|zip>"
+
+msgid "plugin.select"
+msgstr "选择要运行的插件，或安装 / 卸载插件"
+
+msgid "plugin.confirm_run"
+msgstr "运行该插件吗？运行期间终端将交给插件使用。"
+
+msgid "plugin.run_title"
+msgstr "插件运行结果"
+
+msgid "plugin.exit_code"
+msgstr "退出码：{code}"
+
+msgid "plugin.run_failed"
+msgstr "插件运行失败。"
+
+msgid "plugin.interrupted"
+msgstr "插件运行被中断。"
+
+msgid "plugin.manifest_issues"
+msgstr "清单无法解析的插件："
+
+msgid "plugin.install"
+msgstr "安装插件…"
+
+msgid "plugin.uninstall"
+msgstr "卸载插件…"
+
+msgid "plugin.install_path"
+msgstr "插件来源（目录或 zip 归档的路径；TUI 没有文件浏览器）："
+
+msgid "plugin.install_title"
+msgstr "插件安装结果"
+
+msgid "plugin.installed_ok"
+msgstr "已安装插件 {id} —— 版本 {version}，共 {files} 个文件。"
+
+msgid "plugin.uninstall_title"
+msgstr "插件卸载结果"
+
+msgid "plugin.uninstalled_ok"
+msgstr "已卸载插件 {id} —— 删除 {files} 个文件，释放 {bytes} 字节。"
+
+msgid "plugin.uninstall_confirm"
+msgstr "卸载插件 {id} 吗？它在 plugins/ 下的目录会被删除。"
+
+msgid "plugin.downgrade_title"
+msgstr "拒绝降级安装"
+
+msgid "plugin.downgrade_confirm"
+msgstr "待安装的版本比已安装的版本旧。仍要降级安装吗？"
+
+msgid "plugin.downgrade_installed"
+msgstr "已按确认执行降级安装。"
+
+msgid "plugin.cancelled"
+msgstr "已取消，未做任何改动。"
