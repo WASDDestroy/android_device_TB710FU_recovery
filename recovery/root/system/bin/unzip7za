@@ -1,0 +1,134 @@
+#!/system/bin/sh
+#
+# unzip front-end backed by 7za for TWRP.
+#
+# The stock unzip binary is ziptool (system/libziparchive). Its `unzip -p`
+# allocates the ENTIRE uncompressed entry into memory and only then writes it to
+# stdout, so any ZIP64 entry larger than the available RAM (e.g. a single
+# images/super.img.zst >4GB from an OTA package) either aborts with
+# std::bad_alloc or gets OOM-killed, and the piped output is truncated.
+#
+# 7za fully supports ZIP64 (64-bit compressed size, local header offsets and
+# central directory) and streams its output, so it handles single >4GB entries
+# in a constant, small memory footprint.
+#
+# Installed as /system/bin/unzip by BOARD_RECOVERY_IMAGE_PREPARE in
+# BoardConfig.mk, replacing the build's `unzip -> ziptool` symlink.
+#
+# Argument parsing uses `shift` and passes entry names as "$@" rather than
+# accumulating them in a string, so entry names containing spaces survive. That
+# matters here because archive members like "images/super.img.zst" are fine but
+# OTA payloads are not guaranteed to avoid spaces.
+#
+# NOTE: variable names must start with a letter (POSIX); a leading digit such as
+# 7ZA is invalid and mksh misparses it.
+
+SEVENZA=/system/bin/7za
+[ -x "$SEVENZA" ] || SEVENZA=7za
+
+# unzip option state
+pipe=0
+junk=0
+overwrite=0
+never=0
+quiet=0
+list=0
+test=0
+dir=""
+
+# Only leading options are consumed here. Anything from the first non-option
+# argument onward is the archive plus optional entry names, which stay in "$@".
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -p) pipe=1; shift ;;
+        -j) junk=1; shift ;;
+        -o) overwrite=1; shift ;;
+        -n) never=1; shift ;;
+        -q) quiet=1; shift ;;
+        -t) test=1; shift ;;
+        -l|-v|-Z) list=1; shift ;;
+        -d)
+            if [ $# -lt 2 ]; then
+                echo "unzip: option -d requires a directory" >&2
+                exit 1
+            fi
+            dir="$2"
+            shift 2
+            ;;
+        --) shift; break ;;
+        -*)
+            # combined short flags such as -pqo
+            combined="${1#-}"
+            shift
+            case "$combined" in *p*) pipe=1 ;; esac
+            case "$combined" in *j*) junk=1 ;; esac
+            case "$combined" in *o*) overwrite=1 ;; esac
+            case "$combined" in *n*) never=1 ;; esac
+            case "$combined" in *q*) quiet=1 ;; esac
+            case "$combined" in *t*) test=1 ;; esac
+            case "$combined" in *l*) list=1 ;; esac
+            ;;
+        *) break ;;
+    esac
+done
+
+if [ $# -lt 1 ]; then
+    echo "unzip: missing archive filename" >&2
+    exit 1
+fi
+
+archive="$1"
+shift
+# "$@" is now the (possibly empty) list of entry names.
+
+if [ "$list" = "1" ]; then
+    exec "$SEVENZA" l "$archive" "$@"
+fi
+
+if [ "$test" = "1" ]; then
+    exec "$SEVENZA" t "$archive" "$@"
+fi
+
+# 7za exits 0 even when the requested entry does not exist, which would hide the
+# error. Check up front and translate to a non-zero exit so callers that rely on
+# `unzip -p` exit codes keep working.
+if [ "$pipe" = "1" ]; then
+    if [ $# -gt 0 ]; then
+        missing=0
+        for f in "$@"; do
+            count=$("$SEVENZA" l -ba "$archive" "$f" 2>/dev/null | wc -l)
+            if [ "$count" -eq 0 ]; then
+                echo "unzip: cannot find $f in $archive" >&2
+                missing=1
+            fi
+        done
+        [ "$missing" = "0" ] || exit 2
+    fi
+    # -so routes file data to stdout; diagnostics stay on stderr. The -bs*
+    # switches suppress progress output so the stream is pure entry data.
+    exec "$SEVENZA" e -so -bsp0 -bso0 "$archive" "$@"
+fi
+
+# Plain extraction. $yopt is intentionally unquoted: it is either empty or a
+# single option word.
+yopt=""
+if [ "$overwrite" = "1" ]; then
+    yopt="-y"
+elif [ "$never" = "1" ]; then
+    yopt="-aos"
+fi
+
+if [ -n "$dir" ]; then
+    mkdir -p "$dir"
+    if [ "$junk" = "1" ]; then
+        exec "$SEVENZA" e -y -o"$dir" "$archive" "$@"
+    else
+        exec "$SEVENZA" x -y -o"$dir" "$archive" "$@"
+    fi
+else
+    if [ "$junk" = "1" ]; then
+        exec "$SEVENZA" e $yopt "$archive" "$@"
+    else
+        exec "$SEVENZA" x $yopt "$archive" "$@"
+    fi
+fi
