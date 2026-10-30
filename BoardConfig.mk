@@ -129,12 +129,14 @@ BOARD_AVB_ENABLE := true
 
 
 # Other TWRP Configurations
+TW_INCLUDE_WIFI := true
 TARGET_RECOVERY_QCOM_RTC_FIX            := true
 TW_CUSTOM_CPU_TEMP_PATH                 := "/sys/class/thermal/thermal_zone48/temp"
 TW_EXCLUDE_APEX                         := true
 TW_EXCLUDE_DEFAULT_USB_INIT             := true
 TW_EXTRA_LANGUAGES                      := true
-TW_LOAD_VENDOR_MODULES                  := "adsp_loader_dlkm.ko goodix_core.ko oplus_chg_v2.ko stm_st54se_gpio.ko nxp-nci.ko"
+TW_LOAD_VENDOR_MODULES                  := "adsp_loader_dlkm.ko stm_st54se_gpio.ko cnss_prealloc.ko cnss_utils.ko cnss_nl.ko \
+    wlan_firmware_service.ko cnss_plat_ipc_qmi_svc.ko cnss2.ko cfg80211.ko"
 TW_LOAD_VENDOR_MODULES_EXCLUDE_GKI      := true
 #TW_NO_SCREEN_BLANK                     := true
 TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID  := true
