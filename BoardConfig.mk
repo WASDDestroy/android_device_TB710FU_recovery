@@ -130,6 +130,7 @@ BOARD_AVB_ENABLE := true
 
 # Other TWRP Configurations
 TW_INCLUDE_WIFI := true
+TW_NO_HAPTICS := true
 TARGET_RECOVERY_QCOM_RTC_FIX            := true
 TW_CUSTOM_CPU_TEMP_PATH                 := "/sys/class/thermal/thermal_zone48/temp"
 TW_EXCLUDE_APEX                         := true
