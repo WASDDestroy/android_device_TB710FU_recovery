@@ -1,0 +1,61 @@
+# WLAN bring-up for topaz (QCA kiwi_v2 / cnss2)
+#
+# NOTE: init does NOT auto-import this file. /system/etc/init/hw/init.rc only
+# imports /init.recovery.${ro.hardware}.rc, so init.recovery.qcom.rc ends with
+#     import /init.recovery.wifi.rc
+# Without that line the wpa_supplicant service is never defined and GUI2
+# reports "Could not ask init to start wpa_supplicant".
+
+on property:twrp.modules.loaded=true
+    # GUI2's "Test Network" runs `toybox ping`, which needs an ICMP DGRAM
+    # socket.  The default range "1 0" disables that for every gid (even root
+    # gets EACCES), so GUI2 always reports "Gateway ping: failed".
+    write /proc/sys/net/ipv4/ping_group_range "0 2147483647"
+    # cfg80211 depends on rfkill, which vendor_dlkm does not ship.
+    insmod /lib/modules/rfkill.ko
+    # TWRP copies vendor modules to /tmp and unmounts /vendor afterwards,
+    # so /vendor/lib/modules is gone by the time this action runs.
+    insmod /tmp/vendor/lib/modules/cfg80211.ko
+    # qca_cld3_kiwi_v2 references ipa_* (IPA/WDI) symbols, so the IPA stack has
+    # to be in the kernel first.  TW_LOAD_VENDOR_MODULES does not cover these.
+    insmod /tmp/vendor/lib/modules/rmnet_mem.ko
+    insmod /tmp/vendor/lib/modules/gsim.ko
+    insmod /tmp/vendor/lib/modules/ipam.ko
+    # Build the path firmware_class.path looks at: /vendor/firmware_mnt/image/kiwi/*
+    mkdir /vendor/firmware_mnt/image
+    mount none /firmware/image /vendor/firmware_mnt/image bind
+    # wlan_mac.bin lives on persist. /vendor stays unmounted in normal TWRP
+    # operation, so the ramdisk copy of .../qca_cld/kiwi_v2 is what the driver
+    # reads; expose the real MAC under the path that copy points at.
+    mkdir /tmp/wifi_persist
+    mount ext4 /dev/block/bootdevice/by-name/persist /tmp/wifi_persist ro
+    mkdir /mnt/vendor/persist/kiwi_v2
+    mount none /tmp/wifi_persist/kiwi_v2 /mnt/vendor/persist/kiwi_v2 bind
+    # wpa_supplicant drops to uid/gid wifi (1010) by itself, exactly like on
+    # Android, so its control socket has to be created in a directory that
+    # uid 1010 can write.  0777 because init has no reliable way to chown to
+    # an AID from the ramdisk.
+    mkdir /tmp/recovery 0777
+    mkdir /tmp/recovery/sockets 0777
+    # cnss firmware file-system handshake, then the WLAN driver itself.
+    wait /sys/devices/platform/soc/b0000000.qcom,cnss-kiwi/fs_ready 10
+    write /sys/devices/platform/soc/b0000000.qcom,cnss-kiwi/fs_ready 1
+    insmod /tmp/vendor/lib/modules/qca_cld3_kiwi_v2.ko
+    wait /sys/class/net/wlan0 15
+    setprop twrp.wifi.driver.ready true
+
+on property:twrp.wifi.driver.ready=true
+    start wpa_supplicant
+
+# No "capabilities" line on purpose.  Restricting the set to NET_ADMIN/NET_RAW
+# also drops CAP_SETUID/CAP_SETGID/CAP_DAC_OVERRIDE; wpa_supplicant then cannot
+# switch to uid wifi, stays uid 0, its control socket becomes root:root 0770,
+# and wpa_cli (which always runs as uid wifi) gets EACCES.  GUI2 then prints
+# "Could not start a scan:" with an empty reply.
+# No "group" line either: the binary does its own setgid(wifi) and only some
+# AID names resolve in this ramdisk.
+service wpa_supplicant /system/bin/wpa_supplicant -Dnl80211 -iwlan0 -c/system/etc/wifi/wpa_supplicant.conf
+    class main
+    user root
+    disabled
+    seclabel u:r:recovery:s0
