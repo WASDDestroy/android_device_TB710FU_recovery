@@ -96,6 +96,11 @@ TW_INCLUDE_RESETPROP          := true
 TW_USE_TOOLBOX                := true
 TW_INCLUDE_ZSTD               := true
 
+BOARD_RECOVERY_IMAGE_PREPARE += \
+    rm -f $(PRODUCT_OUT)/recovery/root/system/bin/unzip && \
+    cp $(TARGET_DEVICE_DIR)/recovery/root/system/bin/unzip7za $(PRODUCT_OUT)/recovery/root/system/bin/unzip && \
+    chmod 0755 $(PRODUCT_OUT)/recovery/root/system/bin/unzip
+
 # TWRP display
 TW_BRIGHTNESS_PATH      := /sys/class/backlight/panel0-backlight/brightness
 TW_DEFAULT_BRIGHTNESS   := 2048
