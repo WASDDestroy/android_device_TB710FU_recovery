@@ -1,2 +1,4 @@
 *.mk text eol=lf
 *.sh text eol=lf
+recovery/root/system/bin/* -text
+recovery/root/system/lib64/* -text
