@@ -1,15 +1,23 @@
 #!/system/bin/sh
 # AVBPowerTool2 for TWRP -- launcher
 #
-#   avbpt                 # TUI
-#   avbpt about           # CLI
-#   avbpt image inspect --image Images/boot.img
+#   avbpt                       # TUI
+#   avbpt about                 # CLI
+#   avbpt --data image inspect --image Images/boot.img
+#
+# Options handled here (must come before the avbpowertool sub-command):
+#   --data                      workspace in /data (persistent, for big images)
+#   --tmp / --ram               workspace in /tmp (default, RAM disk)
+#   --workspace DIR             any directory
+#   --no-warn                   silence the RAM-workspace notice
 #
 # Env overrides:
 #   AVBPT_ROOT=/avbpowertool            (auto-detected from the script location)
-#   AVBPT_WORKSPACE=/data/avbpowertool2_workspace
+#   AVBPT_WORKSPACE=/path | twrp        (twrp -> /sdcard/<TWRP folder>/avbpowertool)
+#   AVBPT_TWRP_FOLDER=MyTWRP            (override folder auto-detection)
 #   AVBPT_TERM=twrp|xterm
 #   AVBPT_LINES=17 AVBPT_COLS=115
+#   AVBPT_NO_WARN=1
 #
 # The payload is relocatable: it runs from wherever avbpt itself sits, so
 # /avbpowertool, /customzip/avbpowertool or a flattened /customzip all work.
@@ -20,7 +28,104 @@ if command -v readlink >/dev/null 2>&1; then
 fi
 _here=$(cd "$(dirname "$_self")" 2>/dev/null && pwd)
 ROOT=${AVBPT_ROOT:-${_here:-/avbpowertool}}
-WS=${AVBPT_WORKSPACE:-/data/avbpowertool2_workspace}
+
+# --- workspace selection ---------------------------------------------------
+# Default is the RAM disk: most users only sign images well under 128 MiB and
+# want zero writes to /data.  Anything bigger (or anything worth keeping)
+# should live in /data -- see the notice below.
+WS_TMP=/tmp/avbpowertool2_workspace
+WS_DATA=/data/avbpowertool2_workspace
+WS=${AVBPT_WORKSPACE:-$WS_TMP}
+WS_EXPLICIT=0
+[ -n "$AVBPT_WORKSPACE" ] && WS_EXPLICIT=1
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --workspace)
+            if [ $# -ge 2 ]; then shift; WS=$1; WS_EXPLICIT=1; shift; else shift; fi
+            ;;
+        --workspace=*) WS=${1#*=}; WS_EXPLICIT=1; shift ;;
+        --data)        WS=$WS_DATA; WS_EXPLICIT=1; shift ;;
+        --tmp|--ram)   WS=$WS_TMP;  WS_EXPLICIT=1; shift ;;
+        --no-warn)     AVBPT_NO_WARN=1; shift ;;
+        *) break ;;
+    esac
+done
+TUI=0
+[ $# -eq 0 ] && TUI=1
+
+# --- where is TWRP's own folder on internal storage? ----------------------
+# The folder name is user-configurable in TWRP, so it must not be hardcoded.
+# Sources, in order: env, ro.twrp.folder, the settings file that TWRP keeps
+# inside that folder (.twrp_settings / .twrps), then the live recovery log.
+avbpt_twrp_folder() {
+    if [ -n "$AVBPT_TWRP_FOLDER" ]; then printf '%s\n' "$AVBPT_TWRP_FOLDER"; return; fi
+    f=$(getprop ro.twrp.folder 2>/dev/null)
+    if [ -n "$f" ]; then printf '%s\n' "$f"; return; fi
+    for base in /mnt/vendor/persist /sdcard /data/media/0; do
+        for d in "$base"/*; do
+            [ -d "$d" ] || continue
+            if [ -e "$d/.twrp_settings" ] || [ -e "$d/.twrps" ]; then
+                basename "$d"; return
+            fi
+        done
+    done
+    f=$(sed -n "s#.*Backup folder set to '/data/media/0/\([^/]*\)/BACKUPS.*#\1#p" \
+            /tmp/recovery.log 2>/dev/null | tail -1)
+    if [ -n "$f" ]; then printf '%s\n' "$f"; return; fi
+    printf '%s\n' TWRP
+}
+
+case "$WS" in
+    twrp|auto)
+        if [ -d /sdcard ] && [ -w /sdcard ]; then
+            WS="/sdcard/$(avbpt_twrp_folder)/avbpowertool"
+        else
+            WS=$WS_TMP
+        fi
+        ;;
+esac
+
+# /tmp unusable (or not mounted) -> fall back to /data
+case "$WS" in
+    /tmp/*)
+        if ! mkdir -p "$WS" 2>/dev/null || [ ! -w "$WS" ]; then
+            WS=$WS_DATA
+        fi
+        ;;
+esac
+
+# --- workspace bootstrap ---------------------------------------------------
+# init.sh owns the checks (workspace skeleton, avbtool.py link, and a *check*
+# of the executable bits).  It runs before the interpreter probe so that a
+# partially broken payload produces one clear message instead of a shell
+# "permission denied".  "-q" keeps it silent and skips its ~200 ms import
+# test, so this costs ~20 ms.
+#
+# NOTE: the launcher never chmods.  Modes are set by the packaging
+# (zip/tar store them, install-adb.sh sets them, a device-tree copy keeps
+# whatever git recorded); if they are wrong we stop and ask for the explicit
+# repair command instead of silently changing the ramdisk.
+if [ -f "$ROOT/init.sh" ]; then
+    if ! AVBPT_ROOT="$ROOT" AVBPT_WORKSPACE="$WS" sh "$ROOT/init.sh" -q >/dev/null 2>&1; then
+        echo "avbpt: payload check failed:" >&2
+        AVBPT_ROOT="$ROOT" AVBPT_WORKSPACE="$WS" sh "$ROOT/init.sh" --no-fix 2>&1 | sed 's/^/  /' >&2
+        echo "avbpt: repair with:  sh $ROOT/init.sh --fix" >&2
+        exit 1
+    fi
+else
+    # older payload without init.sh -- minimal inline bootstrap
+    if ! mkdir -p "$WS/Images" "$WS/profiles" "$WS/plugins" "$WS/Logs" \
+                  "$WS/.avbpowertool-staging" "$WS/.tmp" 2>/dev/null || [ ! -w "$WS" ]; then
+        echo "avbpt: workspace $WS is not writable (is /data mounted/decrypted?)" >&2
+        exit 1
+    fi
+    if [ ! -e "$WS/avbtool.py" ]; then
+        rm -f "$WS/avbtool.py" 2>/dev/null
+        ln -s "$ROOT/app/avbtool.py" "$WS/avbtool.py" 2>/dev/null || \
+            cp "$ROOT/app/avbtool.py" "$WS/avbtool.py"
+    fi
+fi
 
 # --- interpreter: prefer the bundled one, fall back to TWRP's /python_env ---
 if [ -x "$ROOT/py/python" ]; then
@@ -34,9 +139,13 @@ fi
 
 export PYTHONHOME="$PYROOT"
 export LD_LIBRARY_PATH="$PYROOT:/system/lib64:$LD_LIBRARY_PATH"
-export PYTHONPATH="$ROOT/app:$ROOT/stdlib/python312.zip:$ROOT/pylib"
+# compat/ first: its sitecustomize.py blocks the in-tree FEC encoder so that
+# avbtool.py uses the external `fec` binary, without modifying the checkout.
+export PYTHONPATH="$ROOT/compat:$ROOT/app:$ROOT/stdlib/python312.zip:$ROOT/pylib"
 export PATH="$ROOT/bin:$PYROOT:$PATH"
 export AVB_CRYPTO_BACKEND=openssl
+# never drop __pycache__ into the (possibly read-only) checkout
+export PYTHONDONTWRITEBYTECODE=1
 
 # --- terminfo -------------------------------------------------------------
 # 'twrp' is a minimal ANSI entry (CUP/EL/ED/SGR + CSI arrow keys).  TWRP's
@@ -61,6 +170,9 @@ elif [ -s "$WS/terminal.conf" ]; then
 elif [ -s "$ROOT/terminal.conf" ]; then
     read -r gl gc < "$ROOT/terminal.conf"
     [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
+elif [ -s "$WS_DATA/terminal.conf" ]; then
+    read -r gl gc < "$WS_DATA/terminal.conf"
+    [ -n "$gl" ] && export LINES="$gl" COLUMNS="$gc"
 else
     geom=$("$PYROOT/python" "$ROOT/tools/ttyprobe.py" 2>/dev/null)
     case "$geom" in
@@ -69,20 +181,35 @@ else
 fi
 
 # --- workspace bootstrap ---------------------------------------------------
-if ! mkdir -p "$WS/Images" "$WS/profiles" "$WS/plugins" "$WS/Logs" \
-              "$WS/.avbpowertool-staging" "$WS/.tmp" 2>/dev/null || [ ! -w "$WS" ]; then
-    echo "avbpt: workspace $WS is not writable (is /data mounted/decrypted?)" >&2
-    exit 1
-fi
-# avbtool.py must sit in the workspace root (WorkspacePaths.avbtool_script).
-# Refresh it when missing or dangling (e.g. after the payload was relocated).
-if [ ! -e "$WS/avbtool.py" ]; then
-    rm -f "$WS/avbtool.py" 2>/dev/null
-    ln -s "$ROOT/app/avbtool.py" "$WS/avbtool.py" 2>/dev/null || \
-        cp "$ROOT/app/avbtool.py" "$WS/avbtool.py"
-fi
+# (already done above, before the interpreter check)
 export TMPDIR="$WS/.tmp"
 [ -w "$TMPDIR" ] || export TMPDIR=/tmp
+
+# --- RAM-workspace notice --------------------------------------------------
+# Printed once per boot (the marker lives in tmpfs, so it resets on reboot),
+# and only when the workspace was not chosen explicitly.
+case "$WS" in
+    /tmp/*)
+        if [ "$WS_EXPLICIT" -eq 0 ] && [ "${AVBPT_NO_WARN:-0}" != "1" ] && \
+           [ ! -e /tmp/.avbpt_ws_notice ]; then
+            : > /tmp/.avbpt_ws_notice 2>/dev/null
+            {
+                echo
+                echo "avbpt: 工作区在内存盘 $WS"
+                echo "       RAM workspace -- everything here disappears on reboot."
+                echo "       小镜像(<128 MiB)可以直接用; 大镜像或需保留配置/签名结果时:"
+                echo "           avbpt --data                        # /data/avbpowertool2_workspace"
+                echo "           avbpt --workspace /data/xxx         # 任意目录"
+                echo "       本次提示只显示一次; 关闭: AVBPT_NO_WARN=1"
+                echo
+            } >&2
+            # keep the notice readable before the TUI clears the screen
+            if [ "$TUI" -eq 1 ] && [ -t 0 ]; then
+                sleep 2
+            fi
+        fi
+        ;;
+esac
 
 cd "$WS" || exit 1
 exec "$PYROOT/python" -m avbpowertool "$@"

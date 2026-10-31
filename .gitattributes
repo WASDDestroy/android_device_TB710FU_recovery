@@ -2,3 +2,10 @@
 *.sh text eol=lf
 recovery/root/system/bin/* -text
 recovery/root/system/lib64/* -text
+
+# avbpowertool payload: binaries must stay untouched, scripts are LF
+recovery/root/avbpowertool/py/**        -text
+recovery/root/avbpowertool/stdlib/*.zip -text
+recovery/root/avbpowertool/pylib/*      -text
+recovery/root/avbpowertool/bin/fec      -text
+recovery/root/avbpowertool/terminfo/**  -text
