@@ -90,3 +90,39 @@ or
 fastboot flash recovery_a recovery.img
 fastboot flash recovery_b recovery.img
 ```
+
+## One-click KernelSU root
+
+`recovery/root/system/bin/ksu_oneroot.sh` runs inside TWRP and supports both
+bootloader states:
+
+- **Unlocked** — patches the active slot's `init_boot` with KernelSU and
+  flashes it directly.
+- **Locked (no-unlock)** — rebuilds the testkey AVB trust chain with the
+  bundled `avbpowertool`: reads the eight partitions into a workspace,
+  verifies the current chain, generates a profile, backs everything up,
+  patches `init_boot`, signs `boot/dtbo/init_boot/pvmfw/recovery/vbmeta/
+  vbmeta_system/vendor_boot`, flashes them and (only for ZUXOS >=
+  1.5.04.445) restores the bundled old ABL that trusts the AOSP testkey.
+
+Requirements: `/data` decrypted, `/sdcard` writable, at least ~1 GiB free.
+
+```sh
+# terminal in TWRP
+ksu_oneroot.sh                      # interactive; asks for YES
+ksu_oneroot.sh --yes                # no prompt
+ksu_oneroot.sh --mode locked --dry-run --yes   # read/config/backup/sign only
+ksu_oneroot.sh --restore /sdcard/Download/twrp_no_unlocking/<stamp>
+```
+
+The locked flow refuses to run when KernelSU/Magisk is already present, when
+an OTA is pending, or when the current eight partitions no longer form a
+bootable chain. A failed flash triggers an automatic restore from the backup;
+the backup directory also contains `restore.sh` and `SHA256SUMS`.
+
+GUI2: **Advanced -> One-click Root** runs the same auto-detecting flow.
+The item passes `--mode auto --yes` because the GUI has no terminal; its
+swipe confirmation is the safety gate, and the script output streams to the
+console.
+
+Design notes: [docs/NO_UNLOCK_ROOT_PLAN.md](docs/NO_UNLOCK_ROOT_PLAN.md).
