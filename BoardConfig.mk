@@ -143,8 +143,10 @@ TW_CUSTOM_CPU_TEMP_PATH                 := "/sys/class/thermal/thermal_zone48/te
 TW_EXCLUDE_APEX                         := true
 TW_EXCLUDE_DEFAULT_USB_INIT             := true
 TW_EXTRA_LANGUAGES                      := true
-TW_LOAD_VENDOR_MODULES                  := "adsp_loader_dlkm.ko stm_st54se_gpio.ko cnss_prealloc.ko cnss_utils.ko cnss_nl.ko \
-    wlan_firmware_service.ko cnss_plat_ipc_qmi_svc.ko cnss2.ko cfg80211.ko"
+# WLAN modules are bundled in the ramdisk and loaded by
+# /system/bin/load-wlan-modules.sh, so they must not be pulled from the
+# ROM partitions here (their ABI is tied to the ROM kernel).
+TW_LOAD_VENDOR_MODULES                  := "adsp_loader_dlkm.ko stm_st54se_gpio.ko"
 TW_LOAD_VENDOR_MODULES_EXCLUDE_GKI      := true
 TW_NO_SCREEN_BLANK                      := true
 TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID  := true
