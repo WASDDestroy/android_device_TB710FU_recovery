@@ -53,6 +53,11 @@ find_rfkill() {
     RF=$(ls $SYS/lib/modules/*/kernel/net/rfkill/rfkill.ko 2>/dev/null | head -1)
   fi
   [ -n "$RF" ] && [ -f "$RF" ] && /system/bin/insmod "$RF" 2>/dev/null
+  # system_dlkm is only borrowed for rfkill. Leaving it mounted keeps its
+  # device-mapper node busy, and dm then refuses to remove it ("Unable to unmap
+  # dynamic partitions"). /tmp/vdlkm stays up for now because wifi-up.sh
+  # insmods qca_cld3 from it, and is released once the driver is up.
+  umount "$SYS" 2>/dev/null
 }
 
 SRC=
