@@ -115,6 +115,9 @@ expect=$([ "$cur" = 0 ] && echo _a || echo _b)
 
 > 这一条同时替换原解锁脚本第 3 步的“只看 init_boot 的 kernelsu.ko”，
 > 从而覆盖 boot 集成（GKI）的情况。
+>
+> GKI 布局的 `boot` 可能 `RAMDISK_SZ=0`（generic ramdisk 在 `init_boot`），`magiskboot unpack` 只会产出 `kernel`。检测逻辑把“没有 `ramdisk.cpio`”
+> 视为“boot 没有 ramdisk 标记”，继续执行；只有 `magiskboot` 真正失败才报 `cannot unpack boot`。
 
 ### 3.4 信任链闸门（仅 `MODE=locked` 严格）
 

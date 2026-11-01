@@ -233,9 +233,14 @@ unpack_listing() {
   _dir=$WORK/unpack_$_tag
   rm -rf "$_dir" || return 1
   mkdir -p "$_dir" || return 1
-  ( cd "$_dir" && "$MAGISKBOOT" unpack "$_img" >/dev/null 2>&1 ) || return 1
-  [ -f "$_dir/ramdisk.cpio" ] || return 1
-  toybox cpio -it < "$_dir/ramdisk.cpio" > "$_dir/listing.txt" 2>/dev/null || return 1
+  ( cd "$_dir" && "$MAGISKBOOT" unpack "$_img" >/dev/null 2>&1 ) || return 2
+  # GKI boot images often carry the kernel only (RAMDISK_SZ=0); the generic
+  # ramdisk lives in init_boot.  "No ramdisk.cpio" is not an unpack failure.
+  if [ ! -f "$_dir/ramdisk.cpio" ]; then
+    : > "$_dir/listing.txt"
+    return 3
+  fi
+  toybox cpio -it < "$_dir/ramdisk.cpio" > "$_dir/listing.txt" 2>/dev/null || return 2
   return 0
 }
 
@@ -243,7 +248,9 @@ detect_root_state() {
   _boot_img=$1
   _init_img=$2
 
-  unpack_listing "$_init_img" init || fail "cannot unpack init_boot"
+  unpack_listing "$_init_img" init
+  _rc=$?
+  [ "$_rc" = 0 ] || fail "cannot unpack init_boot (rc=$_rc)"
   if grep -Fqx "kernelsu.ko" "$WORK/unpack_init/listing.txt"; then
     fail "init_boot is already patched by KernelSU; refusing to run again"
   fi
@@ -251,15 +258,24 @@ detect_root_state() {
     fail "init_boot is already patched by Magisk; refusing"
   fi
 
-  unpack_listing "$_boot_img" boot || fail "cannot unpack boot"
-  if grep -Fqx "kernelsu.ko" "$WORK/unpack_boot/listing.txt"; then
-    fail "boot is already patched by KernelSU (GKI); refusing to run again"
-  fi
-  if grep -Fqx "init.real" "$WORK/unpack_boot/listing.txt"; then
-    fail "boot is already patched by KernelSU (init.real); refusing to run again"
-  fi
-  if grep -Fq ".backup/.magisk" "$WORK/unpack_boot/listing.txt"; then
-    fail "boot is already patched by Magisk; refusing"
+  unpack_listing "$_boot_img" boot
+  _rc=$?
+  if [ "$_rc" = 2 ]; then
+    fail "cannot unpack boot"
+  elif [ "$_rc" = 3 ]; then
+    log "boot has no ramdisk (GKI layout); skipping boot ramdisk markers"
+  elif [ "$_rc" != 0 ]; then
+    fail "cannot unpack boot (rc=$_rc)"
+  else
+    if grep -Fqx "kernelsu.ko" "$WORK/unpack_boot/listing.txt"; then
+      fail "boot is already patched by KernelSU (GKI); refusing to run again"
+    fi
+    if grep -Fqx "init.real" "$WORK/unpack_boot/listing.txt"; then
+      fail "boot is already patched by KernelSU (init.real); refusing to run again"
+    fi
+    if grep -Fq ".backup/.magisk" "$WORK/unpack_boot/listing.txt"; then
+      fail "boot is already patched by Magisk; refusing"
+    fi
   fi
   ok "boot and init_boot are not patched"
 }
