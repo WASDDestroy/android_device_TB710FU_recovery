@@ -36,8 +36,8 @@ list=0
 test=0
 dir=""
 
-# Only leading options are consumed here. Anything from the first non-option
-# argument onward is the archive plus optional entry names, which stay in "$@".
+# Options normally come before the archive, so consume that leading run first.
+# Non-option arguments from here on are the archive plus entry names.
 while [ $# -gt 0 ]; do
     case "$1" in
         -p) pipe=1; shift ;;
@@ -79,6 +79,42 @@ fi
 
 archive="$1"
 shift
+
+# Options may also follow the archive and the entry names. Vendor OTA packages
+# commonly write `unzip "$zip" path -d "$dir"` (busybox-style argument order),
+# which the leading-option loop above would otherwise turn into bogus entry
+# names and a hard 7za "Unknown switch: -d" failure. Re-scan what is left,
+# pulling the options out and re-appending entry names in their original order.
+#
+# `remaining` counts the arguments not inspected yet; re-appended names sit at
+# the tail, past that boundary, so no argument is examined twice.
+remaining=$#
+while [ "$remaining" -gt 0 ]; do
+    arg="$1"
+    shift
+    remaining=$((remaining - 1))
+    case "$arg" in
+        -d)
+            if [ "$remaining" -lt 1 ]; then
+                echo "unzip: option -d requires a directory" >&2
+                exit 1
+            fi
+            dir="$1"
+            shift
+            remaining=$((remaining - 1))
+            ;;
+        -d?*) dir="${arg#-d}" ;;
+        -p) pipe=1 ;;
+        -j) junk=1 ;;
+        -o) overwrite=1 ;;
+        -n) never=1 ;;
+        -q) quiet=1 ;;
+        -t) test=1 ;;
+        -l|-v|-Z) list=1 ;;
+        --) ;;
+        *) set -- "$@" "$arg" ;;
+    esac
+done
 # "$@" is now the (possibly empty) list of entry names.
 
 if [ "$list" = "1" ]; then
