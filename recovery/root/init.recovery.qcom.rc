@@ -69,7 +69,10 @@ on property:twrp.modules.loaded=true
     start vendor.health-default
 
 
-on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=true
+# Decrypt before the SPL rewrite (see TWPartitionManager::DecryptData): the
+# data on an unformatted device may still carry keyblobs from a ROM with a newer
+# security patch level, and lowering the SPL first makes KeyMint reject them.
+on property:twrp.crypto.ready=1
     start override-spl
     
 
