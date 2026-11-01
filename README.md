@@ -14,6 +14,8 @@ git clone --depth=1 https://github.com/morannlx/adnroid_device_TB710FU_recovery.
 ```
 source build/envsetup.sh
 lunch twrp_topaz
+# For release version, recommend:
+# lunch twrp_topaz bp2a userdebug
 make recoveryimage
 ```
 
