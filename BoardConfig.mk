@@ -5,6 +5,7 @@
 #
 
 # Building with minimal manifest
+TARGET_FS_CONFIG_GEN += device/lenovo/topaz/fs_config/android_files
 ALLOW_MISSING_DEPENDENCIES                      := true
 BUILD_BROKEN_DUP_RULES                          := true
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES    := true
@@ -96,10 +97,14 @@ TW_INCLUDE_RESETPROP          := true
 TW_USE_TOOLBOX                := true
 TW_INCLUDE_ZSTD               := true
 
+# NOTE: never ship files under recovery/root/sbin. bootable/recovery/etc/init.rc
+# replaces /sbin with a symlink to /system/bin, and a non-empty /sbin makes that
+# rmdir+symlink fail, leaving no /sbin/sh. Vendor OTA updater scripts commonly
+# start with #!/sbin/sh and then die with "Can't execute '/tmp/updater'".
+# Put recovery tools in recovery/root/system/bin instead.
 BOARD_RECOVERY_IMAGE_PREPARE += \
     rm -f $(PRODUCT_OUT)/recovery/root/system/bin/unzip && \
-    cp $(TARGET_DEVICE_DIR)/recovery/root/system/bin/unzip7za $(PRODUCT_OUT)/recovery/root/system/bin/unzip && \
-    chmod 0755 $(PRODUCT_OUT)/recovery/root/system/bin/unzip
+    cp $(TARGET_DEVICE_DIR)/recovery/root/system/bin/unzip7za $(PRODUCT_OUT)/recovery/root/system/bin/unzip
 
 # TWRP display
 TW_BRIGHTNESS_PATH      := /sys/class/backlight/panel0-backlight/brightness
@@ -127,11 +132,13 @@ PLATFORM_VERSION                := 99.87.36
 PLATFORM_VERSION_LAST_STABLE    := $(PLATFORM_VERSION)
 PLATFORM_SECURITY_PATCH         := 2099-12-31
 VENDOR_SECURITY_PATCH           := $(PLATFORM_SECURITY_PATCH)
+BOOT_SECURITY_PATCH             := $(PLATFORM_SECURITY_PATCH)
 TW_DEVICE_VERSION               := Lenovo Xiaoxin Pad Pro GT
 
 # Verified Boot
 BOARD_AVB_ENABLE := true
-
+BOARD_AVB_ALGORITHM := SHA256_RSA4096
+BOARD_AVB_KEY_PATH := device/lenovo/topaz/recovery/root/avbpowertool/tools/testkey_rsa4096.pem
 
 # Other TWRP Configurations
 TW_INCLUDE_WIFI := true

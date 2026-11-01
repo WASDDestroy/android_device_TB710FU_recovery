@@ -37,3 +37,6 @@ PRODUCT_EXTRA_RECOVERY_KEYS += \
 
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += $(DEVICE_PATH)
+
+# FS configs
+PRODUCT_PACKAGES += fs_config_files_system fs_config_dirs_system
