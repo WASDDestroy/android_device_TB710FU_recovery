@@ -70,7 +70,6 @@ on property:twrp.modules.loaded=true
 
 
 on property:ro.crypto.state=encrypted && property:ro.boot.dynamic_partitions=true
-    start avbtool
     start override-spl
     
 
