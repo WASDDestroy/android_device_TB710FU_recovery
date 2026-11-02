@@ -612,7 +612,7 @@ backup_set() {
   {
     printf '#!/system/bin/sh\n'
     printf 'DIR=$(cd "$(dirname "$0")" && pwd)\n'
-    printf 'exec /system/bin/ksu_oneroot.sh --restore "$DIR"\n'
+    printf 'exec %s --restore "$DIR"\n' "${RESTORE_ENTRY:-/system/bin/ksu_oneroot.sh}"
   } > "$BK/restore.sh" || return 1
   chmod 755 "$BK/restore.sh" 2>/dev/null || true
   sync

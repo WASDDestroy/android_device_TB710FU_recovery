@@ -133,4 +133,33 @@ The item passes `--mode auto --yes` because the GUI has no terminal; its
 swipe confirmation is the safety gate, and the script output streams to the
 console.
 
+## Install Kernel on a locked bootloader
+
+GUI2 **Advanced -> Install Kernel** puts the kernel of the selected image into
+`boot`. A locked bootloader rejects that image once the repack drops the AVB
+footer, so `kernel_avb_flash.sh` rebuilds the testkey chain around it with the
+same pipeline as the locked one-click root flow.
+
+The script requires `/data` decrypted, `/sdcard` writable and enough free
+space. It reads the eight partitions, verifies the current chain, generates a
+testkey profile, writes a full backup (eight images + `abl.img` + profile +
+`restore.sh`), stages the repacked `boot`, signs all eight images and flashes
+them in `dtbo init_boot pvmfw vendor_boot boot recovery vbmeta_system vbmeta`
+order. For ZUXOS >= 1.5.04.445 it also writes the bundled old ABL. A failure
+after the first write restores the backup automatically; the backup directory
+also contains `SHA256SUMS` and `restore.sh`.
+
+An unlocked bootloader keeps the direct-flash path and does not rebuild the
+chain; the kernel target is `boot` in both cases. To exercise the rebuild on an
+unlocked device while testing, invoke the backend manually; `--force-locked` is
+a test-only switch and is never passed by the GUI, whose normal route refuses
+when the bootloader state is unknown.
+
+```sh
+# the repacked image is left in /tmp/repacknew/new-boot.img by twrpRepacker
+kernel_avb_flash.sh --image /tmp/repacknew/new-boot.img --force-locked --yes
+kernel_avb_flash.sh --image /tmp/repacknew/new-boot.img --force-locked --dry-run --yes
+kernel_avb_flash.sh --restore /sdcard/Download/twrp_no_unlocking/<stamp>
+```
+
 Design notes: [docs/NO_UNLOCK_ROOT_PLAN.md](docs/NO_UNLOCK_ROOT_PLAN.md).
