@@ -1,5 +1,8 @@
 # TWRP device tree for Lenovo Xiaoxin Pad Pro GT
 
+> [!important]
+> Also check the modded version of YARP codebase used in this project: [android_bootable_recovery](https://github.com/WASDDestroy/android_bootable_recovery)
+
 TB710FU (codenamed _"topaz"_) is a smart tablet from Lenovo.
 
 ## Build it yourself?
