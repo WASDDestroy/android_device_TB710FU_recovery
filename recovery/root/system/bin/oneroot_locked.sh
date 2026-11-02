@@ -167,10 +167,26 @@ run_locked() {
   grep -Fqx "kernelsu.ko" "$WORK/unpack_patched/listing.txt" ||
     locked_abort "patched init_boot does not contain kernelsu.ko"
 
-  mv -f "$PATCHED" "$IMGDIR/init_boot.img" || locked_abort "cannot replace init_boot.img"
-  if ! avbpt_run image inspect init_boot 2>/dev/null | grep -q "Hash descriptor"; then
-    locked_abort "patched init_boot lost its AVB footer"
-  fi
+  _page=$(sed -n 's/^PAGESIZE *\[\([0-9][0-9]*\)\].*/\1/p' \
+    "$WORK/unpack_patched/unpack.log" | head -n1)
+  [ -n "$_page" ] || _page=4096
+
+  _payload_size=$(avbpy "$BIN_DIR/oneroot_bootimg.py" --page "$_page" "$PATCHED") ||
+    locked_abort "cannot determine the patched init_boot payload size"
+  log "patched init_boot: packed=$_payload_size file=$_patched_size partition=$_init_size"
+  [ "$_payload_size" -lt "$_init_size" ] ||
+    locked_abort "packed init_boot payload fills the partition; no room for an AVB footer"
+
+  # ksud may pad the output to the original partition size and drop or stale
+  # the AVB footer.  Always normalise to the packed boot image size so that
+  # add_hash_footer has room for a fresh footer.
+  head -c "$_payload_size" "$PATCHED" > "$WORK/init_boot_normalized.img" ||
+    locked_abort "cannot trim the patched init_boot"
+  mv -f "$WORK/init_boot_normalized.img" "$IMGDIR/init_boot.img" ||
+    locked_abort "cannot replace init_boot.img"
+  _patched_size=$(stat -c %s "$IMGDIR/init_boot.img") ||
+    locked_abort "cannot stat the normalised init_boot"
+  log "normalised patched init_boot to $_patched_size bytes; footer will be added during signing"
   ok "init_boot patched ($_patched_size bytes)"
 
   # ------------------------------------------------------------------

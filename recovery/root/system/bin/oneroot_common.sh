@@ -133,11 +133,15 @@ ota_guard() {
 require_data() {
   _u=$(getprop twrp.user.0.decrypt 2>/dev/null || true)
   _a=$(getprop twrp.all.users.decrypted 2>/dev/null || true)
-  log "twrp.user.0.decrypt=${_u:-<empty>} twrp.all.users.decrypted=${_a:-<empty>}"
-  if [ "$_u" = 1 ] && mountpoint -q /data && [ -r /data/system/packages.xml ]; then
+  # FDE with no lockscreen can decrypt successfully while both properties stay
+  # empty, so they are informational only.  The mounted, readable metadata is
+  # the real signal that /data is usable.
+  log "twrp.user.0.decrypt=${_u:-<empty>} twrp.all.users.decrypted=${_a:-<empty>} (informational)"
+  if mountpoint -q /data && [ -r /data/system/packages.xml ]; then
+    IS_FBE_DECRYPTED=1
     ok "IS_FBE_DECRYPTED=1 (/data is mounted and readable)"
   else
-    warn "/data is not decrypted"
+    warn "/data is not mounted or its metadata is not readable"
     warn "TWRP: Mount -> Decrypt Data, then run this tool again."
     fail "/data must be decrypted before running this tool"
   fi
@@ -233,7 +237,9 @@ unpack_listing() {
   _dir=$WORK/unpack_$_tag
   rm -rf "$_dir" || return 1
   mkdir -p "$_dir" || return 1
-  ( cd "$_dir" && "$MAGISKBOOT" unpack "$_img" >/dev/null 2>&1 ) || return 2
+  ( cd "$_dir" && "$MAGISKBOOT" unpack "$_img" > "$_dir/unpack.log" 2>&1 ) || return 2
+  # The log also provides PAGESIZE for oneroot_bootimg.py (header v3/v4 does
+  # not carry the page size).
   # GKI boot images often carry the kernel only (RAMDISK_SZ=0); the generic
   # ramdisk lives in init_boot.  "No ramdisk.cpio" is not an unpack failure.
   if [ ! -f "$_dir/ramdisk.cpio" ]; then

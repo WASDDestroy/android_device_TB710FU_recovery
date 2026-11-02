@@ -27,7 +27,7 @@
 | testkey | `/avbpowertool/tools/testkey_rsa{2048,4096}.pem` 与插件 keys 为同一密钥 | PEM 规范化比对 |
 | `abl.img` | ELF32 ARM、静态链接、**恰好 1,048,576 字节**、尾部补零、无 AVB footer；SHA-256 `6CFA16E6…B74A8` | `avbpowertool/tools/abl.img` |
 | TWRP recovery 构建产物 | `Algorithm: NONE`、`Rollback Index: 0`（未签名） | `avbtool info_image out/.../recovery.img` |
-| ksud 行为 | `boot-patch` 会 `mv init init.real`、写入 `init`（ksuinit）、写入 `kernelsu.ko`；`android_bootimg` 会**保留并重写 AVB footer** | KernelSU `boot_patch.rs`、`android_bootimg/patcher.rs` |
+| ksud 行为 | `boot-patch` 会 `mv init init.real`、写入 `init`（ksuinit）、写入 `kernelsu.ko`；`android_bootimg` 可能保留并重写 AVB footer，也可能只输出 boot image，或把产物 padding 到分区大小；脚本不依赖修补产物带 footer，总是按 header 裁剪 | KernelSU `boot_patch.rs`、`android_bootimg/patcher.rs` |
 | ksud `boot-info` | 只有 `current-kmi/supported-kmis/is-ab-device/default-partition/available-partitions/slot-suffix`，**不能判断是否已 patch** | 真机输出 |
 | GUI2 Terminal | 真正 PTY（`initPty`），`[ -t 0 ]` 为真 | `gui2/backend/terminal_engine.cpp` |
 | GUI2 命令入口 | `TWFunc::ExecCmd` 一次性执行，无 PTY | `gui2/backend/twrp_tools_backend.cpp` |
@@ -82,6 +82,9 @@ fi
 | 8 个分区节点 `boot/dtbo/init_boot/pvmfw/recovery/vbmeta/vbmeta_system/vendor_boot` + 活动槽存在 | 退出 1 |
 | `abl$slot`（或 `abl`）存在，且 `blockdev --getsize64 == 1048576` | 退出 1（不支持的分区布局） |
 | `/data` 剩余空间 ≥ `2.6 × 8 镜像总大小 + 64 MiB` | 退出 1 |
+
+> `/data` 判定不依赖 `twrp.user.0.decrypt` / `twrp.all.users.decrypted`：
+> FDE 无锁屏时两者为空，但 `/data` 已挂载且 `packages.xml` 可读即为可用。
 
 ### 3.2 OTA 闸门（解锁/锁定模式都执行）
 
@@ -339,8 +342,11 @@ sync
 校验：
 - 输出存在，大小 ≤ 分区大小（8 MiB）；
 - `magiskboot unpack` 后 cpio 含 `kernelsu.ko`；
-- `avbpt … image inspect init_boot` 的 `descriptor` 非空
-  （ksud 会保留 AVB footer；为空则说明版本行为变化，必须中止）。
+- `avbpt … image inspect init_boot` 的 `descriptor` **不要求非空**：
+  ksud 可能只输出 boot image、丢掉 footer，也可能把产物 padding 到分区大小。
+  脚本无论 footer 是否存在，都按 boot header v3/v4 计算 packed size
+  （`oneroot_bootimg.py`）并裁剪掉 padding/旧 footer，再由签名阶段添加新 footer；
+  只有 packed size 本身已经填满分区时才拒绝。
 
 通过后 `mv` 覆盖 `$IMGDIR/init_boot.img`。原始 init_boot 已在备份中。
 
@@ -351,7 +357,9 @@ avbpt --workspace "$WS/avb" --no-warn image sign \
   --profile "$ID" --execute --yes --remove-footers --json
 ```
 
-`--remove-footers` 对 6 个 hash 镜像生效（含刚修补的 init_boot，footer 已被 ksud 保留）；
+`--remove-footers` 对 6 个 hash 镜像生效。刚修补的 init_boot 已被裁剪到
+packed size、不带 footer；CLI 的 `erase_footer` 对它报错但被忽略，
+`add_hash_footer` 会重新添加并补齐到分区大小。
 `_commit_staging` 会把结果写回 `$IMGDIR`，因此 Step 5 的备份必须已完成。
 
 签名后校验：
@@ -466,6 +474,7 @@ fi
 | `system/bin/oneroot_locked.sh` | 第 6 节 10 步 |
 | `system/bin/avbpt-config-gen.sh` | 第 4 节配置生成（可后续合入 avbpowertool2） |
 | `system/bin/oneroot_preflight.py` | 解析 `image inspect --json`，执行第 3.4 节校验 |
+| `system/bin/oneroot_bootimg.py` | 计算 boot header v3/v4 的 packed size，用于裁剪 ksud 的 padding |
 
 `avbpy`（放在 `oneroot_common.sh`，仅用于 `avbtool.py` 与预检 helper）：
 ```sh

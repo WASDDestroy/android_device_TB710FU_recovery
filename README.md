@@ -109,6 +109,12 @@ bootloader states:
 
 Requirements: `/data` decrypted, `/sdcard` writable, at least ~1 GiB free.
 
+`/data` counts as decrypted when it is mounted and `/data/system/packages.xml`
+is readable; the `twrp.*decrypt` properties may be empty on FDE devices without
+a lockscreen. The patched `init_boot` does not have to keep its AVB footer:
+signing always normalises the patched image to the packed boot image size
+and then adds a new footer.
+
 ```sh
 # terminal in TWRP
 ksu_oneroot.sh                      # interactive; asks for YES
