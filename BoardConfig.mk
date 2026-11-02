@@ -137,8 +137,10 @@ TW_DEVICE_VERSION               := Lenovo Xiaoxin Pad Pro GT
 
 # Verified Boot
 BOARD_AVB_ENABLE := true
-BOARD_AVB_ALGORITHM := SHA256_RSA4096
-BOARD_AVB_KEY_PATH := device/lenovo/topaz/recovery/root/avbpowertool/tools/testkey_rsa4096.pem
+BOARD_AVB_RECOVERY_KEY_PATH  := device/lenovo/topaz/recovery/root/avbpowertool/tools/testkey_rsa4096.pem
+BOARD_AVB_RECOVERY_ALGORITHM := SHA256_RSA4096
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX := 1
+BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 0
 
 # Other TWRP Configurations
 TW_INCLUDE_WIFI := true
